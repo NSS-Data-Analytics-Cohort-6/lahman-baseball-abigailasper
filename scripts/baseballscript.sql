@@ -1,26 +1,54 @@
 -- 1. What range of years for baseball games played does the provided database cover?
--- ANSWER: 1871-2016
--- SELECT MIN(year),
--- 	MAX(year)
--- 	FROM homegames;
+-- ANSWER: 
+	-- Range of years: 1871-2016
+-- SCRIPT
+	-- SELECT MIN(year),
+	-- 	MAX(year)
+	-- 	FROM homegames;
 
 -- 2. Find the name and height of the shortest player in the database. How many games did he play in? What is the name of the team for which he played?
 -- ANSWER: 
--- 	Name: Eddie Gaedel/Edward Carl (ID: gaedeed01)
--- 	Height: 43"
--- 	Number games: 1
--- 	Team name: St. Louis Browns (ID: SLA)
--- SELECT *
--- FROM people
--- ORDER BY height;
+	-- 	Name: Eddie Gaedel/Edward Carl (ID: gaedeed01)
+	-- 	Height: 43"
+	-- 	Number games: 1
+	-- 	Team name: St. Louis Browns (ID: SLA)
+-- SCRIPT 1
+	-- SELECT *
+	-- FROM people
+	-- ORDER BY height;
+-- SCRIPT 2
 	-- SELECT *
 	-- FROM appearances
 	-- WHERE playerID = 'gaedeed01';
-		-- SELECT name
-		-- FROM teams
-		-- WHERE teamid = 'SLA';
+-- SCRIPT 3
+	-- SELECT name
+	-- FROM teams
+	-- WHERE teamid = 'SLA';
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
+-- ANSWER:
+	-- Top earning Vanderbilt player: David Price (total salary: $245,553,888)
+-- SCRIPT 1 (schoolid = vandy)
+	-- SELECT *
+	-- FROM schools
+	-- ORDER BY schoolname DESC;
+-- SCRIPT 2
+	-- SELECT 
+	-- 	p.namefirst,
+	-- 	p.namelast,
+	-- 	SUM(salary) AS total_salary
+	-- FROM collegeplaying AS cp
+	-- LEFT JOIN people AS p
+	-- ON cp.playerid = p.playerid
+	-- LEFT JOIN salaries AS s
+	-- ON p.playerid = s.playerid
+	-- WHERE schoolid = 'vandy'
+	-- 	AND salary IS NOT NULL
+	-- GROUP BY 
+	-- 	p.namefirst,
+	-- 	p.namelast
+	-- ORDER BY 
+	-- 	SUM(salary) DESC;
 
 -- 4. Using the fielding table, group players into three groups based on their position: label players with position OF as "Outfield", those with position "SS", "1B", "2B", and "3B" as "Infield", and those with position "P" or "C" as "Battery". Determine the number of putouts made by each of these three groups in 2016.
 
