@@ -68,6 +68,16 @@
 	-- GROUP BY position;
 
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
+-- ANSWER:
+	-- There was a general trend that both homeruns and strikeouts increased with time.
+-- SCRIPT
+	-- SELECT ROUND(AVG(hr), 2) AS avg_homeruns,
+	-- 	ROUND(AVG(so), 2) AS avg_strikeouts,
+	-- 	CONCAT(LEFT(CAST(yearid AS text), 3), '0s') AS decade
+	-- FROM batting
+	-- WHERE yearid >= '1920'
+	-- GROUP BY CONCAT(LEFT(CAST(yearid AS text), 3), '0s')
+	-- ORDER BY decade;
 
 -- 6. Find the player who had the most success stealing bases in 2016, where success is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted at least 20 stolen bases.
 
