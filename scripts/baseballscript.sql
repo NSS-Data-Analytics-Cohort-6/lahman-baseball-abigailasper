@@ -215,7 +215,62 @@ ORDER BY decade;
 		h.games
 	ORDER BY avg_attendance;
 
-
 -- 9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
+WITH nl_awards AS 
+	(SELECT playerid,
+	 	yearid,
+	 	lgid
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+		AND lgid = 'NL'),
+al_awards AS
+	(SELECT playerid,
+		yearid,
+	 	lgid
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+		AND lgid = 'AL')
+SELECT nl_awards.playerid,
+	nl_awards.yearid,
+	al_awards.yearid,
+	nl_awards.lgid,
+	al_awards.lgid
+FROM nl_awards
+INNER JOIN al_awards
+ON nl_awards.playerid = al_awards.playerid 
+
+SELECT playerid
+FROM awardsmanagers
+WHERE awardid = 'TSN Manager of the Year'
+	AND lgid IN ('NL', 'AL')
+GROUP BY playerid
+HAVING COUNT(DISTINCT lgid) = 2
+
+SELECT am_1.playerid
+FROM awardsmanagers AS am_1
+LEFT JOIN awardsmanagers AS am_2
+ON am_1.playerid = am_2.playerid 
+	AND am_2.lgid = 'NL'
+WHERE am_1.lgid = 'Al'
+	AND am_1.awardid = 'TSN Manager of the Year'
+
+SELECT am.playerid,
+	p.namegiven,
+	am.yearid
+FROM awardsmanagers AS am
+LEFT JOIN people AS p
+ON am.playerid = p.playerid
+WHERE lgid = 'AL'
+	AND awardid = 'TSN Manager of the Year'
+	AND am.playerid IN
+		(SELECT playerid
+		FROM awardsmanagers
+		WHERE awardid = 'TSN Manager of the Year'
+			AND lgid = 'NL'
+		ORDER BY playerid DESC)
+GROUP BY am.playerid,
+	p.namegiven,
+	am.yearid
+			
 
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
