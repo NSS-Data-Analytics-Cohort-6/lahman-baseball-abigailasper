@@ -126,44 +126,95 @@ ORDER BY decade;
 	GROUP BY yearid,
 		name
 	ORDER BY MIN(w);
--- SCRIPT 3
-WITH cte AS
-(SELECT a.yearid,
-	a.name,
-	a.w,
-	a.wswin
-FROM teams AS a
-INNER JOIN (
-	SELECT yearid,
-			MAX(w) AS w
-	FROM teams
-	GROUP BY yearid
-	ORDER BY yearid) AS b
-ON a.yearid = b.yearid AND a.w = b.w
-WHERE a.yearid BETWEEN 1970 AND 2016)
-SELECT SUM(CASE WHEN wswin = 'Y' THEN 1
-		   WHEN wswin = 'N' THEN 0 END) AS total
-	FROM cte;
+-- SCRIPT 3: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
+	WITH cte AS
+	(SELECT a.yearid,
+		a.name,
+		a.w,
+		a.wswin
+	FROM teams AS a
+	INNER JOIN (
+		SELECT yearid,
+				MAX(w) AS w
+		FROM teams
+		GROUP BY yearid
+		ORDER BY yearid) AS b
+	ON a.yearid = b.yearid AND a.w = b.w
+	WHERE a.yearid BETWEEN 1970 AND 2016)
+	SELECT SUM(CASE WHEN wswin = 'Y' THEN 1
+			   WHEN wswin = 'N' THEN 0 END) AS total
+		FROM cte;
 --SCRIPT 4
-WITH cte AS
-(SELECT a.yearid,
-	a.name,
-	a.w,
-	a.wswin
-FROM teams AS a
-INNER JOIN (
-	SELECT yearid,
-			MAX(w) AS w
-	FROM teams
-	GROUP BY yearid
-	ORDER BY yearid) AS b
-ON a.yearid = b.yearid AND a.w = b.w
-WHERE a.yearid BETWEEN 1970 AND 2016)
-SELECT ROUND(AVG(CASE WHEN wswin = 'Y' THEN 1
-		   WHEN wswin = 'N' THEN 0 END)*100, 2) AS avg
-	FROM cte;	
+	WITH cte AS
+	(SELECT a.yearid,
+		a.name,
+		a.w,
+		a.wswin
+	FROM teams AS a
+	INNER JOIN (
+		SELECT yearid,
+				MAX(w) AS w
+		FROM teams
+		GROUP BY yearid
+		ORDER BY yearid) AS b
+	ON a.yearid = b.yearid AND a.w = b.w
+	WHERE a.yearid BETWEEN 1970 AND 2016)
+	SELECT ROUND(AVG(CASE WHEN wswin = 'Y' THEN 1
+			   WHEN wswin = 'N' THEN 0 END)*100, 2) AS avg
+		FROM cte;	
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
+-- TOP AVERAGE ATTENDANCE:
+	/*"Dodger Stadium"	"Los Angeles Dodgers"	45719
+	"Busch Stadium III"	"St. Louis Cardinals"	42524
+	"Rogers Centre"	"Toronto Blue Jays"	41877
+	"AT&T Park"	"San Francisco Giants"	41546
+	"Wrigley Field"	"Chicago Cubs"	39906*/
+-- BOTTOM AVERAGE ATTENDANCE:
+	/*"Tropicana Field"	"Tampa Bay Rays"	15878
+	"Oakland-Alameda County Coliseum"	"Oakland Athletics"	18784
+	"Progressive Field"	"Cleveland Indians"	19650
+	"Marlins Park"	"Miami Marlins"	21405
+	"U.S. Cellular Field"	"Chicago White Sox"	21559*/
+-- SCRIPT 1	
+	SELECT 
+		p.park_name,
+		t.name,
+		(h.attendance / h.games) AS avg_attendance
+	FROM homegames AS h
+	INNER JOIN parks AS p
+	ON h.park = p.park
+	INNER JOIN teams AS t
+	ON h.team = t.teamid
+	WHERE h.year = '2016' 
+		AND t.yearid = '2016'
+		AND h.games >= 10
+	GROUP BY
+		p.park_name,
+		t.name,
+		h.attendance,
+		h.games
+	ORDER BY avg_attendance DESC;
+-- SCRIPT 2
+	SELECT 
+		p.park_name,
+		t.name,
+		(h.attendance / h.games) AS avg_attendance
+	FROM homegames AS h
+	INNER JOIN parks AS p
+	ON h.park = p.park
+	INNER JOIN teams AS t
+	ON h.team = t.teamid
+	WHERE h.year = '2016' 
+		AND t.yearid = '2016'
+		AND h.games >= 10
+	GROUP BY
+		p.park_name,
+		t.name,
+		h.attendance,
+		h.games
+	ORDER BY avg_attendance;
+
 
 -- 9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
 
