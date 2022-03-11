@@ -27,7 +27,7 @@
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
 -- ANSWER:
-	-- Top earning Vanderbilt player: David Price (total salary: $245,553,888)
+	-- Top earning Vanderbilt player: David Price (total salary: $81,851,296)
 -- SCRIPT 1 (schoolid = vandy)
 	SELECT *
 	FROM schools
@@ -36,7 +36,7 @@
 	SELECT 
 		p.namefirst,
 		p.namelast,
-		SUM(salary) AS total_salary
+		SUM(DISTINCT salary) AS total_salary
 	FROM collegeplaying AS cp
 	LEFT JOIN people AS p
 	ON cp.playerid = p.playerid
@@ -71,13 +71,14 @@
 -- ANSWER:
 	-- There was a general trend that both homeruns and strikeouts increased with time, but there was more variability in homeruns.
 -- SCRIPT
-SELECT ROUND(AVG(hr), 2) AS avg_homeruns,
-	ROUND(AVG(so), 2) AS avg_strikeouts,
-	CONCAT(LEFT(CAST(yearid AS text), 3), '0s') AS decade
-FROM teams
-WHERE yearid >= '1920'
-GROUP BY CONCAT(LEFT(CAST(yearid AS text), 3), '0s')
-ORDER BY decade;
+	SELECT
+		ROUND(1.0*SUM(COALESCE(hr, 0))/SUM(COALESCE(g, 0)), 2) AS avg_homeruns,
+		ROUND(1.0*SUM(COALESCE(so,0))/SUM(COALESCE(g,0)), 2) AS avg_strikeouts,
+		CONCAT(LEFT(CAST(yearid AS text), 3), '0s') AS decade
+	FROM teams
+	WHERE yearid >= '1920'
+	GROUP BY CONCAT(LEFT(CAST(yearid AS text), 3), '0s')
+	ORDER BY decade;
 
 -- 6. Find the player who had the most success stealing bases in 2016, where success is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted at least 20 stolen bases.
 --ANSWER:
@@ -101,10 +102,10 @@ ORDER BY decade;
 
 -- 7. From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
 -- ANSWER:
-	-- LARGEST number of wins for team that DID NOT win World Series: 116/Seattle Mariners
-	-- SMALLEST number of wins for team that DID win World Series: 83/St. Louis Cardinals (There was a players' strike in 1981, which is why the LA dodgers only won 63 games that season and went on to win the series)
+	-- LARGEST number of wins for team that DID NOT win World Series: 116/Seattle Mariners/2001
+	-- SMALLEST number of wins for team that DID win World Series: 83/St. Louis Cardinals/2006 (There was a players' strike in 1981, which is why the LA dodgers only won 63 games that season and went on to win the series)
 	-- Number of times team with most wins won World Series: 12 times
-	-- Percent of times team with most wins won World Series: 23.08%
+	-- Percent of times team with most wins won World Series: 25%
 -- SCRIPT 1
 	SELECT yearid,
 		name, 
@@ -128,7 +129,7 @@ ORDER BY decade;
 	ORDER BY MIN(w);
 -- SCRIPT 3: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
 	WITH top_scores AS
-	(SELECT a.yearid,
+	(SELECT DISTINCT a.yearid,
 		a.name,
 		a.w,
 		a.wswin
@@ -146,8 +147,7 @@ ORDER BY decade;
 		FROM top_scores;
 --SCRIPT 4
 	WITH top_scores AS
-	(SELECT a.yearid,
-		a.name,
+	(SELECT DISTINCT a.yearid,
 		a.w,
 		a.wswin
 	FROM teams AS a
@@ -159,8 +159,8 @@ ORDER BY decade;
 		ORDER BY yearid) AS b
 	ON a.yearid = b.yearid AND a.w = b.w
 	WHERE a.yearid BETWEEN 1970 AND 2016)
-	SELECT ROUND(AVG(CASE WHEN wswin = 'Y' THEN 1
-			   WHEN wswin = 'N' THEN 0 END)*100, 2) AS avg
+	SELECT CAST(AVG(CASE WHEN wswin = 'Y' THEN 1.0
+			   WHEN wswin = 'N' THEN 0 END)*100 AS DECIMAL(10,2)) AS avg
 		FROM top_scores;	
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
@@ -270,7 +270,26 @@ ORDER BY playerid,
 	awardid
 
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
-
+-- ANSWER
+WITH hr_table AS
+	(SELECT DISTINCT playerid,
+		MAX(hr) OVER(PARTITION BY playerid) AS max_hr
+	FROM batting
+	GROUP BY playerid,
+	 	hr
+	ORDER BY playerid),
+year_table AS
+	(SELECT playerid,
+		yearid,
+	 	hr
+	FROM batting)
+SELECT playerid,
+	yearid,
+	max_hr
+FROM hr_table
+INNER JOIN year_table
+USING(playerid) 
+WHERE max_hr = hr
 
 -- Walkthrough w/ Taryn
 SELECT playerid,
