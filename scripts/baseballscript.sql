@@ -271,25 +271,49 @@ ORDER BY playerid,
 
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
 -- ANSWER
-WITH hr_table AS
-	(SELECT DISTINCT playerid,
-		MAX(hr) OVER(PARTITION BY playerid) AS max_hr
-	FROM batting
-	GROUP BY playerid,
-	 	hr
-	ORDER BY playerid),
-year_table AS
-	(SELECT playerid,
-		yearid,
-	 	hr
-	FROM batting)
-SELECT playerid,
-	yearid,
-	max_hr
-FROM hr_table
-INNER JOIN year_table
-USING(playerid) 
-WHERE max_hr = hr
+	/*"Robinson"	"Cano"	"canoro01"	39
+	"Bartolo"	"Colon"	"colonba01"	1
+	"Rajai"	"Davis"	"davisra01"	12
+	"Edwin"	"Encarnacion"	"encared01"	42
+	"Francisco"	"Liriano"	"liriafr01"	1
+	"Mike"	"Napoli"	"napolmi01"	34
+	"Angel"	"Pagan"	"paganan01"	12
+	"Adam"	"Wainwright"	"wainwad01"	2*/
+-- SCRIPT
+	SELECT p.namefirst,
+		p.namelast,
+		b1.playerid,
+		b1.hr,
+		b2.max_hr,
+		b1.yearid
+	FROM batting AS b1
+	INNER JOIN 
+		(SELECT DISTINCT playerid,
+			MAX(hr) AS max_hr
+		FROM batting
+		GROUP BY playerid) AS b2
+	ON b1.playerid = b2.playerid
+		AND b1.hr = b2.max_hr
+	LEFT JOIN people AS p
+	ON b1.playerid = p.playerid
+	WHERE hr >= 1
+		AND b1.playerid IN
+			(SELECT playerid
+			FROM people
+			WHERE debut <= '2007-01-01')
+		AND yearid = 2016
+	ORDER BY b1.playerid
+
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
 
 -- Walkthrough w/ Taryn
 SELECT playerid,
