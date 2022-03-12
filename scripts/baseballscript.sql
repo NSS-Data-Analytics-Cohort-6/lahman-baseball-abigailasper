@@ -12,18 +12,24 @@
 	-- 	Height: 43"
 	-- 	Number games: 1
 	-- 	Team name: St. Louis Browns (ID: SLA)
--- SCRIPT 1
-	SELECT *
-	FROM people
-	ORDER BY height;
--- SCRIPT 2
-	SELECT *
-	FROM appearances
-	WHERE playerID = 'gaedeed01';
--- SCRIPT 3
-	SELECT name
-	FROM teams
-	WHERE teamid = 'SLA';
+-- SCRIPT	
+SELECT p.height,
+	p.namegiven,
+	p.namelast,
+	a.g_all AS games_played,
+	t.name
+FROM people AS p
+LEFT JOIN appearances AS a
+USING(playerid)
+LEFT JOIN teams AS t
+USING(teamid)
+GROUP BY p.height,
+	p.namegiven,
+	p.namelast,
+	a.g_all,
+	t.name
+ORDER BY p.height
+LIMIT 1;	
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
 -- ANSWER:
@@ -72,8 +78,8 @@
 	-- There was a general trend that both homeruns and strikeouts increased with time, but there was more variability in homeruns.
 -- SCRIPT
 	SELECT
-		ROUND(1.0*SUM(COALESCE(hr, 0))/SUM(COALESCE(g, 0)), 2) AS avg_homeruns,
-		ROUND(1.0*SUM(COALESCE(so,0))/SUM(COALESCE(g,0)), 2) AS avg_strikeouts,
+		ROUND(1.0*SUM(COALESCE(hr, 0))/SUM(COALESCE(g/2, 0)), 2) AS avg_homeruns,
+		ROUND(1.0*SUM(COALESCE(so,0))/SUM(COALESCE(g/2, 0)), 2) AS avg_strikeouts,
 		CONCAT(LEFT(CAST(yearid AS text), 3), '0s') AS decade
 	FROM teams
 	WHERE yearid >= '1920'
@@ -82,7 +88,7 @@
 
 -- 6. Find the player who had the most success stealing bases in 2016, where success is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted at least 20 stolen bases.
 --ANSWER:
-	-- Player with most success stealing in 2016: Chris Owings
+	-- Player with most success stealing in 2016: Chris Owings (91.304%)
 -- SCRIPT
 	SELECT batting.playerid,
 		namefirst,
@@ -160,7 +166,7 @@
 	ON a.yearid = b.yearid AND a.w = b.w
 	WHERE a.yearid BETWEEN 1970 AND 2016)
 	SELECT CAST(AVG(CASE WHEN wswin = 'Y' THEN 1.0
-			   WHEN wswin = 'N' THEN 0 END)*100 AS DECIMAL(10,2)) AS avg
+			   WHEN wswin = 'N' THEN 0.0 END)*100.0 AS DECIMAL(10,2)) AS avg
 		FROM top_scores;	
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
@@ -297,11 +303,11 @@ ORDER BY playerid,
 	LEFT JOIN people AS p
 	ON b1.playerid = p.playerid
 	WHERE hr >= 1
+		AND yearid = 2016
 		AND b1.playerid IN
 			(SELECT playerid
 			FROM people
 			WHERE debut <= '2007-01-01')
-		AND yearid = 2016
 	ORDER BY b1.playerid
 
 --
